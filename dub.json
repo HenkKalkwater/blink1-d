@@ -1,0 +1,22 @@
+{
+	"authors": [
+		"Chris Josten"
+	],
+	"copyright": "Copyright © 2020, Chris Josten",
+	"description": "D wrapper for blink1-lib, a library for interfacing with the Blink(1) USB RGB LED",
+	"license": "GPL-3.0",
+	"name": "blink1-d",
+	"libs": ["blink1"],
+	"targetType": "library",
+
+	"configurations": [
+		{
+			"name": "withColor",
+			"description": "Include convenience functions for working with the dub library color",
+			"versions": ["withColor"],
+			"dependencies": {
+				"color": ">=0.0.5"
+			}
+		}
+	]
+}

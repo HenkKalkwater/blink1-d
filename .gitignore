@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/blink1-d
+libblink1-d.so
+libblink1-d.dylib
+libblink1-d.dll
+libblink1-d.a
+libblink1-d.lib
+blink1-d-test-*
+*.exe
+*.o
+*.obj
+*.lst
