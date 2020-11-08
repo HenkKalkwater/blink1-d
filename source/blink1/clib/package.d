@@ -40,6 +40,9 @@ immutable int blink1_buf2_size = blink1_report2_size + 1;
 
 immutable int blink1_note_size = 50;
 
+/**
+ * Enumeration of supported blink(1) devices.
+ */
 enum blink1Type_t {
 	/// Unknown type
     BLINK1_UNKNOWN = 0,
@@ -56,13 +59,16 @@ struct hid_device_;
 alias hid_device = hid_device_;
 
 version(USE_HIDAPI) {
-	alias blink1_device = hid_device_; /**< opaque blink1 structure */
+	/**< opaque blink1 structure */
+	alias blink1_device = hid_device_; 
 } else {
 	version(USE_HIDDATA) {
-		alias blink1_device = usbDevice; /**< opaque blink1 structure */
+		/**< opaque blink1 structure */
+		alias blink1_device = usbDevice;
 	} else {
 		pragma(msg, "version identifier USE_HIDAPI or USE_HIDDATA wasn't defined, defaulting to USE_HIDAPI");
-		alias blink1_device = hid_device_; /**< opaque blink1 structure */
+		/**< opaque blink1 structure */
+		alias blink1_device = hid_device_; 
 	}
 }
 
@@ -74,12 +80,20 @@ version(USE_HIDAPI) {
 // you can define "extern int blink1_lib_verbose"
 // and set it to "1" to enable low-level debugging
 
+/**
+ * Struct representing a RGB color.
+ */
 struct rgb_t {
     ubyte r; ubyte g; ubyte b;
 }
 
+/***
+ * Struct representing a pattern line.
+ */
 struct patternline_t {
+	/// The color of this pattern.
     rgb_t color;
+	/// Time in milliseconds to transition towards this pattern.
     ushort millis;
     /// number of led, or 0 for all
     ubyte ledn;
@@ -194,122 +208,154 @@ int blink1_fadeToRGB(blink1_device *dev, ushort fadeMillis,
 
 /**
  * Fade specific LED on blink1mk2 to given RGB color over specified time.
- * @note For mk2 devices.
- * @param dev blink1 device to command
- * @param fadeMillis time to fade in milliseconds
- * @param r red part of RGB color
- * @param g green part of RGB color
- * @param b blue part of RGB color
- * @param n which LED to address (0=all, 1=1st LED, 2=2nd LED)
- * @return -1 on error, 0 on success
+ *
+ * For mk2 devices and above..
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     fadeMillis = time to fade in milliseconds
+ *     r = red part of RGB color
+ *     g = green part of RGB color
+ *     b = blue part of RGB color
+ *     n = which LED to address (0=all, 1=1st LED, 2=2nd LED)
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_fadeToRGBN(blink1_device *dev, ushort fadeMillis,
                       ubyte r, ubyte g, ubyte b, ubyte n );
 /**
  * Set blink1 immediately to a specific RGB color.
- * @note If mk2, sets all LEDs immediately
- * @param dev blink1 device to command
- * @param r red part of RGB color
- * @param g green part of RGB color
- * @param b blue part of RGB color
- * @return -1 on error, 0 on success
+ *
+ * If mk2 or above, sets all LEDs immediately
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     r = red part of RGB color
+ *     g = green part of RGB color
+ *     b = blue part of RGB color
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_setRGB(blink1_device *dev, ubyte r, ubyte g, ubyte b );
 
 /**
  * Read current RGB value on specified LED.
- * @note For mk2 devices only.
- * @param dev blink1 device to command
- * @param r pointer to red part of RGB color
- * @param g pointer to green part of RGB color
- * @param b pointer to blue part of RGB color
- * @param n which LED to get (0=1st, 1=1st LED, 2=2nd LED)
- * @return -1 on error, 0 on success
+ *
+ * For mk2 devices or above.
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     r = pointer to red part of RGB color
+ *     g = pointer to green part of RGB color
+ *     b = pointer to blue part of RGB color
+ *     n = which LED to get (0=1st, 1=1st LED, 2=2nd LED)
+ * Returns: -1 on error, 0 on success
  */
 int blink1_readRGB(blink1_device *dev, ushort* fadeMillis,
                    ubyte* r, ubyte* g, ubyte* b,
                    ubyte ledn);
 /**
  * Attempt to read current RGB value for mk1 devices.
- * @note Called by blink1_setRGB() if device is mk1.
- * @note Does not always work.
- * @param dev blink1 device to command
- * @param r pointer to red part of RGB color
- * @param g pointer to green part of RGB color
- * @param b pointer to blue part of RGB color
- * @return -1 on error, 0 on success
+ *
+ * Called by blink1_setRGB() if device is mk1.
+ * Does not always work.
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     r = pointer to red part of RGB color
+ *     g = pointer to green part of RGB color
+ *     b = pointer to blue part of RGB color
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_readRGB_mk1(blink1_device *dev, ushort* fadeMillis,
                        ubyte* r, ubyte* g, ubyte* b);
 
 /**
  * Read eeprom on mk1 devices
- * @note For mk1 devices only
+ *
+ * For mk1 devices only
  */
 int blink1_eeread(blink1_device *dev, ushort addr, ubyte* val);
 /**
  * Write eeprom on mk1 devices
- * @note For mk1 devices only
+ *
+ * For mk1 devices only
  */
 int blink1_eewrite(blink1_device *dev, ushort addr, ubyte val);
 
 /**
  * Read serial number from mk1 device. Does not work.
- * @note Use USB descriptor serial number instead.
- * @note for mk1 devices only.
- * @note does not work.
+ *
+ * Note: Use USB descriptor serial number instead.
+ * Note: for mk1 devices only.
+ * Note: does not work.
  */
 int blink1_serialnumread(blink1_device *dev, ubyte** serialnumstr);
 /**
  * Write serial number to mk1 device. Does not work.
- * @note for mk1 devices only.
- * @note does not work.
+ *
+ * For mk1 devices only.
+ * Does not work.
  */
 int blink1_serialnumwrite(blink1_device *dev, ubyte* serialnumstr);
 
 /**
  * Tickle blink1 serverdown functionality.
- * @note 'st' param for mk2 firmware only
- * @param on  enable or disable: enable=1, disable=0
- * @param millis milliseconds to wait until triggering (up to 65,355 millis)
- * @param stay lit (st=1) or set off() (st=0)
- * @param startpos pattern start position (fw 205+)
- * @param endpos pattern end pos (fw 205+)
+ *
+ * 'st' param for mk2 firmware only
+ *
+ * Params:
+ *     on  = enable or disable: enable=1, disable=0
+ *     millis = milliseconds to wait until triggering (up to 65,355 millis)
+ *     stay = lit (st=1) or set off() (st=0)
+ *     startpos = pattern start position (fw 205+)
+ *     endpos = pattern end pos (fw 205+)
  */
 int blink1_serverdown(blink1_device *dev, ubyte on, ushort millis,
                       ubyte st, ubyte startpos, ubyte endpos);
 
 /**
  * Play color pattern stored in blink1.
- * @param dev blink1 device to command
- * @param play boolean: 1=play, 0=stop
- * @param pos position to start playing from
- * @return -1 on error, 0 on success
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     play = boolean: 1=play, 0=stop
+ *     pos = position to start playing from
+ * Retruns: -1 on error, 0 on success
  */
 int blink1_play(blink1_device *dev, ubyte play, ubyte pos);
 
 /**
  * Play color pattern stored in blink1mk2.
- * @note For mk2 devices only.
- * @param dev blink1 device to command
- * @param play boolean: 1=play, 0=stop
- * @param startpos position to start playing from
- * @param endpos position to end playing
- * @param count number of times to play (0=forever)
- * @return -1 on error, 0 on success
+ *
+ * For mk2 devices only.
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     play = boolean: 1=play, 0=stop
+ *     startpos = position to start playing from
+ *     endpos = position to end playing
+ *     count = number of times to play (0=forever)
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_playloop(blink1_device *dev, ubyte play, ubyte startpos, ubyte endpos, ubyte count);
 
 /**
  * Read the current state of a playing pattern.
- * @note For mk2 devices only.
- * @param dev blink1 device to command
- * @param playing pointer to play/stop boolean
- * @param playstart pointer to start position
- * @param playend pointer to end position
- * @param playcount pointer to count left
- * @param playpos pointer to play position
- * @return -1 on error, 0 on success
+ *
+ * For mk2 devices only.
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     playing = pointer to play/stop boolean
+ *     playstart = pointer to start position
+ *     playend = pointer to end position
+ *     playcount = pointer to count left
+ *     playpos = pointer to play position
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_readPlayState(blink1_device *dev, ubyte * playing,
                          ubyte* playstart, ubyte* playend,
@@ -317,53 +363,70 @@ int blink1_readPlayState(blink1_device *dev, ubyte * playing,
 
 /**
  * Write a color pattern line to blink1.
- * @note on mk1 devices, this saves the pattern line to nonvolatile storage.
- * @note on mk2 devices, this only saves to RAM (see savePattern() for nonvol)
- * @param dev blink1 device to command
- * @param r red part of RGB color
- * @param g green part of RGB color
- * @param b blue part of RGB color
- * @param pos pattern line number 0-max_patt (FIXME: put note about this)
- * @return -1 on error, 0 on success
+ *
+ * On mk1 devices, this saves the pattern line to nonvolatile storage.
+ * On mk2 devices and above, this only saves to RAM (see savePattern() for nonvol).
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     r = red part of RGB color
+ *     g = green part of RGB color
+ *     b = blue part of RGB color
+ *     pos = pattern line number 0-max_patt (FIXME: put note about this)
+ * Returns: -1 on error, 0 on success
  */
 int blink1_writePatternLine(blink1_device *dev, ushort fadeMillis,
                             ubyte r, ubyte g, ubyte b,
                             ubyte pos);
 /**
  * Read a color pattern line to blink1.
- * @param dev blink1 device to command
- * @param fadeMillis pointer to milliseconds to fade to RGB color
- * @param r pointer to store red color component
- * @param g pointer to store green color component
- * @param b pointer to store blue color component
- * @return -1 on error, 0 on success
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     fadeMillis = pointer to milliseconds to fade to RGB color
+ *     r = pointer to store red color component
+ *     g = pointer to store green color component
+ *     b = pointer to store blue color component
+ * Returns: -1 on error, 0 on success
  */
 int blink1_readPatternLine(blink1_device *dev, ushort* fadeMillis,
                            ubyte* r, ubyte* g, ubyte* b,
                            ubyte pos);
 /**
  * Read a color pattern line to blink1.
- * @note ledn param only works on fw204+ devices
- * @param dev blink1 device to command
- * @param fadeMillis pointer to milliseconds to fade to RGB color
- * @return -1 on error, 0 on success
+ * ledn param only works on fw204+ devices
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     fadeMillis = pointer to milliseconds to fade to RGB color
+ *     r = pointer to store red color component
+ *     g = pointer to store green color component
+ *     b = pointer to store blue color component
+ *     ledn = pointer to store led number
+ *     pos = pattern line number 0-max-patt
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_readPatternLineN(blink1_device *dev, ushort* fadeMillis,
                             ubyte* r, ubyte* g, ubyte* b, ubyte* ledn,
                             ubyte pos);
 /**
  * Save color pattern in RAM to nonvolatile storage.
- * @note For mk2 devices only.
- * @note this doesn't actually return a proper return value, as the
+ *
+ * For mk2 devices and above.
+ * Note this doesn't actually return a proper return value, as the
  *       time it takes to write to flash actually exceeds USB timeout
- * @param dev blink1 device to command
- * @return -1 on error, 0 on success
+ * Params:
+ *     dev = blink1 device to command
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_savePattern(blink1_device *dev);
 
 /**
  * Sets 'ledn' parameter for blink1_savePatternLine()
- * @note only works on fw 204+ devices
+ *
+ * Only works on fw 204+ devices
  */
 int blink1_setLEDN( blink1_device* dev, ubyte ledn);
 
@@ -374,7 +437,7 @@ int blink1_getStartupParams( blink1_device* dev, ubyte* bootmode,
                              ubyte* playstart, ubyte* playend, ubyte* playcount);
 
 /**
- * @note only for devices with fw val 206+ or mk3
+ * Only for devices with fw val 206+ or mk3
  * FIXME: make 'params' a struct
  */
 int blink1_setStartupParams( blink1_device* dev, ubyte bootmode,
@@ -382,6 +445,7 @@ int blink1_setStartupParams( blink1_device* dev, ubyte bootmode,
 
 /**
  * Tell blink(1) to reset into bootloader.
+ *
  * mk3 devices only
  */
 int blink1_bootloaderGo( blink1_device* dev );
@@ -396,10 +460,10 @@ int blink1_getId( blink1_device *dev, ubyte** idbuf );
 int blink1_testtest(blink1_device *dev, ubyte reportid);
 
 
-// reads from notebuf
+/// reads from notebuf
 int blink1_writeNote( blink1_device* dev, ubyte noteid, const ubyte* notebuf);
 
-// writes into notebuf
+/// writes into notebuf
 int blink1_readNote( blink1_device* dev, ubyte noteid, ubyte** notebuf);
 
 
@@ -425,109 +489,143 @@ void blink1_adjustBrightness( ubyte brightness, ubyte* r, ubyte* g, ubyte* b);
 
 /**
  * Simple wrapper for cross-platform millisecond delay.
- * @param delayMillis number of milliseconds to wait
+ *
+ * Params:
+ *     delayMillis = number of milliseconds to wait
  */
 void blink1_sleep(ushort delayMillis);
 
 /**
  * Vendor ID for blink1 devices.
- * @return blink1 VID
+ *
+ * Returns: blink1 VID
  */
 int blink1_vid();  // return VID for blink(1)
 /**
  * Product ID for blink1 devices.
- * @return blink1 PID
+ *
+ * Returns: blink1 PID
  */
 int blink1_pid();  // return PID for blink(1)
 
 
 /**
  * Return platform-specific USB path for given cache index.
- * @param i cache index
- * @return path string
+ *
+ * Params:
+ *     i = cache index
+ *
+ * Returns: path string
  */
 char*  blink1_getCachedPath(int i);
 /**
  * Return bilnk1 serial number for given cache index.
- * @param i cache index
- * @return 8-hexdigit serial number as string
+ *
+ * Params:
+ *     i = cache index
+ *
+ * Returns: 8-hexdigit serial number as string
  */
 char*  blink1_getCachedSerial(int i);
 /**
  * Return cache index for a given platform-specific USB path.
- * @param path platform-specific path string
- * @return cache index or -1 if not found
+ *
+ * Params:
+ *     path = platform-specific path string
+ *
+ * Returns: cache index or -1 if not found
  */
 int          blink1_getCacheIndexByPath( const char* path );
 /**
  * Return cache index for a given blink1 id (0-max or serial number as uint32)
- * @param i blink1 id (0-blink1_max_devices or serial as uint32)
- * @return cache index or -1 if not found
+ *
+ * Params:
+ *     i = blink1 id (0-blink1_max_devices or serial as uint32)
+ *
+ * Returns: cache index or -1 if not found
  */
 int          blink1_getCacheIndexById( ushort i );
 /**
  * Return cache index for a given blink1 serial number.
- * @param path platform-specific path string
- * @return cache index or -1 if not found
+ *
+ * Params:
+ *     path = platform-specific path string
+ *
+ * Returns: cache index or -1 if not found
  */
 int          blink1_getCacheIndexBySerial( const char* serial );
 /**
  * Return cache index for a given blink1_device object.
- * @param dev blink1 device to lookup
- * @return cache index or -1 if not found
+ *
+ * Params:
+ *     dev = blink1 device to lookup
+ *
+ * Returns: cache index or -1 if not found
  */
 int          blink1_getCacheIndexByDev( blink1_device* dev );
 /**
  * Clear the blink1 device cache for a given device.
- * @param dev blink1 device
- * @return cache index that was cleared, or -1 if not found
+ *
+ * Params:
+ *     dev = blink1 device
+ *
+ * Returns: cache index that was cleared, or -1 if not found
  */
 int          blink1_clearCacheDev( blink1_device* dev );
 
 /**
  * Return serial number string for give blink1 device.
- * @param dev blink device to lookup
- * @return 8-hexdigit serial number string
+ * 
+ * Params:
+ *     dev = blink device to lookup
+ *
+ * Returns: 8-hexdigit serial number string
  */
 char*  blink1_getSerialForDev(blink1_device* dev);
 
 /**
  * Return number of entries in blink1 device cache.
- * @note This is the number of devices found with blink1_enumerate()
- * @return number of cache entries
+ *
+ * note This is the number of devices found with blink1_enumerate()
+ *
+ * Returns: number of cache entries
  */
 int          blink1_getCachedCount();
 
 /**
  * Returns version of device at cache index i is a mk2
  *
- * @return mk2=1, mk1=0
+ * Returns: mk2=1, mk1=0
  */
 int          blink1_isMk2ById(int i);
 
 /**
  * Returns if given blink1_device is a mk2 or not
- * @param dev blink1 device to check
- * @return mk2=1, mk1=0
+ *
+ * Params:
+ *     dev = blink1 device to check
+ * Returns: mk2=1, mk1=0
  */
 int          blink1_isMk2(blink1_device* dev);
 
 /**
  * Returns device "mk" type at cache index i
- * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
+ *
+ * Returns: blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
  */
 blink1Type_t blink1_deviceTypeById( int i );
 
 /**
  *
- * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
+ * Returns: blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
  */
 blink1Type_t blink1_deviceType( blink1_device* dev );
 
 /**
  * Return a string representation of the blink(1) device type
  * (e.g. "mk2" or "mk3")
- * @return const string
+ *
+ * Returns: const string
  */
 char* blink1_deviceTypeToStr(blink1Type_t t);
 
