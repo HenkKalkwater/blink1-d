@@ -7,7 +7,7 @@
 	"license": "GPL-3.0",
 	"name": "blink1-d",
 	"libs": ["blink1"],
-	"targetType": "library",
+	"targetType": "executable",
 
 	"configurations": [
 		{

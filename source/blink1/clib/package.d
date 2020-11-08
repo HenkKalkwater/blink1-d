@@ -1,4 +1,6 @@
 /**
+ * Barebones C wrapper for the blink(1) C library.
+ *
  * blink(1) C library -- aka "blink1-lib"
  *
  * Part of the blink(1) open source hardware project
@@ -39,10 +41,14 @@ immutable int blink1_buf2_size = blink1_report2_size + 1;
 immutable int blink1_note_size = 50;
 
 enum blink1Type_t {
+	/// Unknown type
     BLINK1_UNKNOWN = 0,
-    BLINK1_MK1,   // the original one from the kickstarter
-    BLINK1_MK2,   // the updated one with 2 LEDs
-    BLINK1_MK3    // 2018 one based on EFM32HG
+    /// The original one from the kickstarter
+    BLINK1_MK1,   
+    /// The updated one with 2 LEDs
+    BLINK1_MK2,   
+    /// 2018 one based on EFM32HG
+    BLINK1_MK3
 }
 
 // struct blink1_device_;
@@ -75,68 +81,87 @@ struct rgb_t {
 struct patternline_t {
     rgb_t color;
     ushort millis;
-    ubyte ledn;     // number of led, or 0 for all
+    /// number of led, or 0 for all
+    ubyte ledn;
 }
 
 
 /**
  * Scan USB for blink(1) devices.
- * @return number of devices found
+ * Returns: number of devices found
  */
 int          blink1_enumerate();
 
 /**
  * Scan USB for devices by given VID,PID.
- * @param vid vendor ID
- * @param pid product ID
- * @return number of devices found
+ *
+ * Params:
+ *     vid = vendor ID
+ *     pid = product ID
+ *
+ * Returns: number of devices found
  */
 int          blink1_enumerateByVidPid(int vid, int pid);
 
 /**
  * Open first found blink(1) device.
- * @return pointer to opened blink1_device or NULL if no blink1 found
+ *
+ * Returns: pointer to opened [blink1_device] or NULL if no blink1 found
  */
 blink1_device* blink1_open();
 
 /**
  * Open blink(1) by USB path.
- * note: this is platform-specific, and port-specific.
- * @param path string of platform-specific path to blink1
- * @return blink1_device or NULL if no blink1 found
+ *
+ * Note: this is platform-specific, and port-specific.
+ *
+ * Params:
+ *     path = string of platform-specific path to blink1
+ *
+ * Returns: [blink1_device] or NULL if no blink1 found
  */
 blink1_device* blink1_openByPath(const char* path);
 
 /**
  * Open blink(1) by 8-digit serial number.
- * @param serial 8-hex digit serial number
- * @return blink1_device or NULL if no blink1 found
+ *
+ * Params:
+ *     serial = 8-hex digit serial number
+ *
+ * Returns: [blink1_device] or NULL if no blink1 found
  */
 blink1_device* blink1_openBySerial(const char* serial);
 
 /**
- * Open by "id", which if from 0-blink1_max_devices is index
- *  or if >blink1_max_devices, is numerical representation of serial number
- * @param id ordinal 0-15 id of blink1 or numerical rep of 8-hex digit serial
- * @return blink1_device or NULL if no blink1 found
+ * Open by "id", which if from 0-[blink1_max_devices] is index
+ *  or if [blink1_max_devices], is numerical representation of serial number
+ *
+ * Params: 
+ *    id = ordinal 0-15 id of blink1 or numerical rep of 8-hex digit serial
+ * Returns: blink1_device or NULL if no blink1 found
  */
 blink1_device* blink1_openById(uint id );
 
 
 /**
  * Close opened blink1 device.
+ *
  * Safe to call blink1_close on already closed device.
- * @param dev blink1_device
+ *
+ * Params:
+ *     dev = blink1_device
  */
 void blink1_close_internal( blink1_device* dev );
 
 /**
  * Low-level write to blink1 device.
+ *
  * Used internally by blink1-lib
  */
 int blink1_write( blink1_device* dev, void* buf, int len);
 /**
  * Low-level read from blink1 device.
+ *
  * Used internally by blink1-lib
  */
 int blink1_read( blink1_device* dev, void* buf, int len);
@@ -145,19 +170,24 @@ int blink1_read_nosend( blink1_device* dev, void* buf, int len);
 
 /**
  * Get blink1 firmware version.
- * @param dev opened blink1 device
- * @return version as scaled int number (e.g. "v1.1" = 101)
+ *
+ * Params:
+ *     dev = opened blink1 device
+ * Returns: version as scaled int number (e.g. "v1.1" = 101)
  */
 int blink1_getVersion(blink1_device *dev);
 
 /**
  * Fade blink1 to given RGB color over specified time.
- * @param dev blink1 device to command
- * @param fadeMillis time to fade in milliseconds
- * @param r red part of RGB color
- * @param g green part of RGB color
- * @param b blue part of RGB color
- * @return -1 on error, 0 on success
+ *
+ * Params:
+ *     dev = blink1 device to command
+ *     fadeMillis = time to fade in milliseconds
+ *     r = red part of RGB color
+ *     g = green part of RGB color
+ *     b = blue part of RGB color
+ *
+ * Returns: -1 on error, 0 on success
  */
 int blink1_fadeToRGB(blink1_device *dev, ushort fadeMillis,
                      ubyte r, ubyte g, ubyte b );

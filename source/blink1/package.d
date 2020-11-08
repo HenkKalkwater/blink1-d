@@ -1,3 +1,6 @@
+/**
+ * This is the module which contains the Object-Oriented D wrapper.
+ */
 module blink1;
 
 import core.thread;
@@ -14,36 +17,68 @@ version(withColor) {
 	import std.experimental.color;
 }
 
+/**
+ * Thrown when no Blink1 could be found.
+ */
 class Blink1NotFoundException : Exception {
 	mixin basicExceptionCtors;
 }
 
+/**
+ * Thrown when a device does not support the requested method. 
+ *
+ * This exception is for example thrown when the [Blink1Device.readNote] and [Blink1Device.writeNote] 
+ * functions are called on MK1 and MK2 devices, which do not support the note feature.
+ */
 class UnsupportedOperationException : Exception {
 	mixin basicExceptionCtors;
 }
 
+/**
+ * Enum containing the different models of the blink(1) devices out there.
+ *
+ * Simple alias for the type found within the C library.
+ *
+ * See_Also: blink1.clib.blink1Type_t
+ */
 alias Blink1Type = blink1Type_t;
 
+/**
+ * Represents a physical device.
+ *
+ * To get a reference to a device, one should call either [open], [openByPath], [openBySerial] or
+ * [openByIndex]. After being done with the device, please call [close] to release OS resources.
+ */
 class Blink1Device {
 
+	/**
+	 * Represents the LED on the device.
+	 */
 	enum LED {
+		/// Special value: All LEDS
 		ALL = 0,
+		/// First LED
 		ONE = 1,
+		/// Second LED.
 		TWO = 2
 	}
 
-	public static immutable MAX_NOTES = 10;
-	public static immutable MAX_NOTE_SIZE = blink1_note_size;
+	/**
+	 * The maximum amount of notes that this device may hold.
+	 */
+	// These are not static since they may change with new hardware revisions or firmware versions.
+	public immutable maxNotes = 10;
+	public immutable maxNoteSize = blink1_note_size;
 
 	// Our "handle" to the blink led.
-	protected blink1_device *m_device;
+	private blink1_device *m_device;
 	// The index of our device within the blink1 library's cache.
-	protected int m_cachedIndex;
+	private int m_cachedIndex;
 	// The device type of our device;
-	protected immutable Blink1Type m_type;
-	protected immutable ubyte m_maxPatterns;
-	protected Duration m_defaultDur = dur!"msecs"(500);
-	protected bool m_blocking = false;
+	private immutable Blink1Type m_type;
+	private immutable ubyte m_maxPatterns;
+	private Duration m_defaultDur = dur!"msecs"(500);
+	private bool m_blocking = false;
 
 	private Duration m_serverDownTimeout;
 	private bool m_serverDownStayLit;
@@ -66,7 +101,8 @@ class Blink1Device {
 
 	/**
 	 * Opens the first found default Blink1Device. No guarantees are given which one is found first.
-	 * Throws a Blink1NotFoundException if no device could be found.
+	 *
+	 * Throws: a Blink1NotFoundException if no device could be found.
 	 */
 	public static Blink1Device open() {
 		blink1_device *dev = blink1_open();
@@ -75,8 +111,12 @@ class Blink1Device {
 	}
 
 	/**
-	 * Opens the device by the OS-specific path.
-	 * Throws a Blink1NotFoundException if no device could be found with the given path.
+	 * Obtains a Blink1 device by the OS-specific path.
+	 *
+	 * Params:
+	 *     path = The OS-specific path to the USB device.
+	 *
+	 * Throws: a Blink1NotFoundException if no device could be found with the given path.
 	 */
 	public static Blink1Device openByPath(string path) {
 		blink1_device *dev = blink1_openByPath(path.toStringz());
@@ -86,7 +126,10 @@ class Blink1Device {
 
 	/**
 	 * Opens the device by the given serial number.
-	 * Throws a Blink1NotFoundException if no device could be found with the given serial number.
+	 *
+	 * Params:
+	 *     serial = The serial number of the device.
+	 * Throws: a Blink1NotFoundException if no device could be found with the given serial number.
 	 */
 	public static Blink1Device openBySerial(string serial) {
 		blink1_device *dev = blink1_openBySerial(serial.toStringz());
@@ -96,13 +139,25 @@ class Blink1Device {
 
 	/**
 	 * Opens the device by the given index.
-	 * The index should range from 0 to blink1_max_devices.
-	 * Throws a Blink1NotFoundException if no device could be found with the given index;
+	 * 
+	 * Params:
+	 *     index = The index of the device. It should range from 0 to blink1_max_devices.
+	 *
+	 * Throws: a Blink1NotFoundException if no device could be found with the given index;
+	 *
+	 * See_Also: connectedDeviceCount
 	 */
 	public static Blink1Device openByIndex(uint index) {
 		blink1_device *dev = blink1_openById(index);
 		enforce!Blink1NotFoundException(dev != null, "Could not find Blink1Device with serial %u".format(index));
 		return new Blink1Device(dev);
+	}
+
+	/**
+	 * Returns the amount of detected Blink1 devices.
+	 */
+	public static int connectedDeviceCount() {
+		return blink1_enumerate();
 	}
 
 	/**
@@ -114,6 +169,7 @@ class Blink1Device {
 
 	/**
 	 * Returns the firmware version integer.
+	 *
 	 * The hundreds represent the major version, while the units and tenths represent the minor version,
 	 * e.g. "v3.3" = 303;
 	 */
@@ -121,6 +177,9 @@ class Blink1Device {
 		return blink1_getVersion(m_device);
 	}
 
+	/**
+	 * Returns the firmware version as a string in the form of v{major}.{minor}
+	 */
 	public string getFwVersion() {
 		int fwVersion = getFwVersionInt();
 		int major = fwVersion / 100;
@@ -130,6 +189,7 @@ class Blink1Device {
 
 	/**
 	 * Fades the color to the specified value with the given duration.
+	 *
 	 * Params:
 	 *     r = red component of color (0 <= r <= 255)
 	 *     g = green component of color (0 <= g <= 255)
@@ -137,6 +197,7 @@ class Blink1Device {
 	 *     dur = duration of the fade animation. Maximum duration is 65,355 milliseconds. Defaults to `defaultDuration`
 	 *     led = which LED to fade. Defaults to all LEDs
 	 *   
+	 * See_Also: defaultDuration, setRGB
 	 */
 	public void fadeToRGB(ubyte r, ubyte g, ubyte b, Duration dur = dur!"seconds"(-1), LED led = LED.ALL) {
 		if (dur.isNegative) dur = this.m_defaultDur;
@@ -146,10 +207,13 @@ class Blink1Device {
 
 	/**
 	 * Immediatelty changes the color to the given value
+	 *
 	 * Params:
 	 *     r = red component of color (0 <= r <= 255)
 	 *     g = green component of color (0 <= g <= 255)
 	 *     b = blue component of color (0 <= b <= 255)
+	 *
+	 * See_Also: fadeToRGB
 	 */
 	public void setRGB(ubyte r, ubyte g, ubyte b) {
 		blink1_setRGB(m_device, r, g, b);
@@ -158,6 +222,7 @@ class Blink1Device {
 	/**
 	 * Enables the blink1's dead man's trigger. This will play the pattern on the LED when `pokeServerDown` hasn't
 	 * been called after `timeout` has been passed.
+	 *
 	 * Params:
 	 *     timeout = when to start blinking.
 	 *     stayLit = if the LED should stay on after playing the pattern.
@@ -175,7 +240,9 @@ class Blink1Device {
 	}
 
 	/**
-	 * Notifies the LED the "server" is still running, so it won't turn on. See `enableServerDown`.
+	 * Notifies the LED the "server" is still running, so it won't turn on. 
+	 * 
+	 * See_Also: enableServerDown
 	 */
 	public void pokeServerDown() {
 		blink1_serverdown(m_device, cast(ubyte) 1, cast(ushort) this.m_serverDownTimeout.total!"msecs", 
@@ -184,16 +251,26 @@ class Blink1Device {
 	}
 
 	/**
-	 * Disables the serverDown mode. See `enableServerDown`.
+	 * Disables the serverDown mode. 
+	 *
+	 * See_Also: enableServerDown
 	 */
 	public void disableServerDown() {
 		blink1_serverdown(m_device, 0, 0, 0, 0, 0);
 	}
 
+	/**
+	 * Reads a note from the device.
+	 *
+	 * Params:
+	 *     id = The id of the note, 0 <= id < maxNotes
+	 * Returns: The read note
+	 * Throws: UnsupportedOperationException if id < [maxNotes]
+	 */
 	public ubyte[] readNote(ubyte id) {
 		enforce!UnsupportedOperationException(m_type == Blink1Type.BLINK1_MK3);
-		enforce!Exception(id < MAX_NOTES, "Device supports up to %d notes, tried to read %d".format(MAX_NOTES, id));
-		ubyte[] noteBuffer = new ubyte[MAX_NOTE_SIZE];
+		enforce!Exception(id < maxNotes, "Device supports up to %d notes, tried to read %d".format(maxNotes, id));
+		ubyte[] noteBuffer = new ubyte[maxNoteSize];
 		ubyte * noteBufferPtr = noteBuffer.ptr;
 		blink1_readNote(m_device, id, &noteBufferPtr);
 
@@ -201,15 +278,18 @@ class Blink1Device {
 	}
 
 	/**
+	 * Writes a note with the given id.
 	 *
+	 * Params:
+	 *     id = The id of the note to write to, 
 	 */
 	public void writeNote(ubyte id, immutable ubyte[] note) {
 		// blink1_writeNote will happilly write garbage, try to sanitize it
 		// by setting remaining data to zero
 		enforce!UnsupportedOperationException(m_type == Blink1Type.BLINK1_MK3);
-		enforce!Exception(id < MAX_NOTES, "Device supports up to %d notes, tried to write %d".format(MAX_NOTES, id));
-		ulong length = min(MAX_NOTE_SIZE, note.length);
-		ubyte[MAX_NOTE_SIZE] realNote;
+		enforce!Exception(id < maxNotes, "Device supports up to %d notes, tried to write %d".format(maxNotes, id));
+		ulong length = min(maxNoteSize, note.length);
+		ubyte[maxNoteSize] realNote;
 		realNote[0..length] = note[0..length];
 		blink1_writeNote(m_device, id, realNote.ptr);
 	}
@@ -239,7 +319,9 @@ class Blink1Device {
 	}
 
 	/**
-	 * Returns if blocking mode is enabled. See `blocking(bool)` above as well.
+	 * Returns if blocking mode is enabled. 
+	 *
+	 * See_Also: blocking(bool)
 	 */
 	@property bool blocking() {
 		return this.m_blocking;
