@@ -7,16 +7,5 @@
 	"license": "GPL-3.0",
 	"name": "blink1-d",
 	"libs": ["blink1"],
-	"targetType": "executable",
-
-	"configurations": [
-		{
-			"name": "withColor",
-			"description": "Include convenience functions for working with the dub library color",
-			"versions": ["withColor"],
-			"dependencies": {
-				"color": ">=0.0.5"
-			}
-		}
-	]
+	"targetType": "library"
 }
