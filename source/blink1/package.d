@@ -595,7 +595,7 @@ class Blink1Device {
 		enforce!UnsupportedOperationException(m_type == Blink1Type.BLINK1_MK3);
 		enforce!Exception(id < maxNotes, "Device supports up to %d notes, tried to write %d".format(maxNotes, id));
 		ulong length = min(maxNoteSize, note.length);
-		ubyte[maxNoteSize] realNote;
+		ubyte[] realNote = new ubyte[](maxNoteSize);
 		realNote[0..length] = note[0..length];
 		blink1_writeNote(m_device, id, realNote.ptr);
 	}
